@@ -1,0 +1,10 @@
+---
+- name: "Helm - check if Helm binary exists"
+  stat:
+    path: "/usr/local/bin/helm"
+  register: helm_check
+
+- name: "Helm - test Helm binary exists"
+  assert:
+    that: 
+      - helm_check.stat.exists

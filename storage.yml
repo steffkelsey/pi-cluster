@@ -1,0 +1,17 @@
+---
+- name: Run the storage tasks on storage nodes in the cluster
+  hosts: usb_storage
+  become: true
+
+  handlers:
+    - name: restart nfs
+      ansible.builtin.service:
+        name: nfs-server
+        state: restarted
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+    - name: Include storage tasks
+      include_tasks: tasks/storage.yml

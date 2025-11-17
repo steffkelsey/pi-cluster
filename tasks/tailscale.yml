@@ -1,0 +1,98 @@
+---
+- name: Tailscale - Download install script.
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: "~/tailscale_install.sh"
+    mode: a+x
+
+- name: Tailscale - Maybe remove old version
+  ansible.builtin.file:
+    path: /usr/bin/tailscale
+    state: absent
+  when: tailscale_delete_existing
+
+- name: Tailscale - Run install script
+  ansible.builtin.shell: 
+    ~/tailscale_install.sh >> ~/tailscale_install_log.txt
+  args:
+    chdir: "~"
+    creates: /usr/bin/tailscale
+
+- name: Tailscale - check service is started
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+
+- name: Tailscale - Maybe fail if missing Tailscale env variables on local
+  local_action:
+    module: ansible.builtin.fail
+    msg: Env vars TS_CLIENT_ID and TS_CLIENT_SECRET must be set to get proceed with tailscale_join_network set to true
+  become: false
+  vars:
+    has_ts_client_id: lookup('ansible.builtin.env', 'TS_CLIENT_ID') | length > 0
+    has_ts_client_secret: lookup('ansible.builtin.env', 'TS_CLIENT_SECRET') | length > 0
+  when: 
+    - tailscale_join_network
+    - (not has_ts_client_id or not has_ts_client_secret)
+
+- name: Tailscale - Maybe create API key
+  local_action:
+    module: ansible.builtin.uri
+    url: 'https://api.tailscale.com/api/v2/oauth/token'
+    method: POST
+    body:
+      client_id: "{{ lookup('ansible.builtin.env', 'TS_CLIENT_ID') }}"
+      client_secret: "{{ lookup('ansible.builtin.env', 'TS_CLIENT_SECRET') }}"
+    body_format: form-urlencoded
+    headers:
+      Content-Type: application/x-www-form-urlencoded
+  become: false
+  register: oauth_token_result
+  when: tailscale_join_network
+  failed_when: oauth_token_result.json.access_token is not defined
+
+- name: Tailscale - Maybe get join auth_key
+  local_action:
+    module: ansible.builtin.uri
+    url: "https://api.tailscale.com/api/v2/tailnet/{{ tailscale_tailnet }}/keys"
+    method: POST
+    body: |
+      {
+        "description": "k3s node access 5 min expiry",
+        "capabilities": {
+          "devices": {
+            "create": {
+              "reusable": false,
+              "ephemeral": false,
+              "preauthorized": true,
+              "tags": [
+                "{{ tag }}"
+              ]
+            }
+          }
+        },
+        "expirySeconds": 86400,
+        "scopes": [
+          "auth_keys"
+        ],
+        "tags": [
+          "{{ tag }}"
+        ]
+      } 
+    body_format: json
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer {{ oauth_token_result.json.access_token }}"
+  become: false
+  vars:
+    tag: "{{ tailscale_tag | default('tag:server') }}"
+  register: auth_key_result
+  when: tailscale_join_network
+  failed_when: 
+    - tailscale_tailnet is not defined
+    - auth_key_result.json.key is not defined
+
+- name: Tailscale - Maybe join network
+  ansible.builtin.command:
+    cmd: "tailscale up --auth-key={{ auth_key_result.json.key }}"
+  when: tailscale_join_network

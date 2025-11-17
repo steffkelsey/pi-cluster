@@ -1,0 +1,20 @@
+---
+helm_delete_existing: false
+tailscale_delete_existing: false
+tailscale_join_network: false
+tailscale_tailnet: steffkelsey.github
+
+packages:
+  - git
+  - jq
+  - python3-venv
+  - tree
+  - vim
+
+packages_state: present
+
+venv_dir: /ansible/venv
+
+usb_device_uuid: e192928f-a460-47f5-b6a4-018c85c9c403
+usb_mount_path: /mnt/usb
+k8s_storage_node_label: hdd=enabled

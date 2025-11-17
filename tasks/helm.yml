@@ -1,0 +1,19 @@
+---
+- name: Helm - Download install script.
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    dest: "~/helm_install.sh"
+    mode: a+x
+
+- name: Helm - Maybe remove old version
+  ansible.builtin.file:
+    path: /usr/local/bin/helm
+    state: absent
+  when: helm_delete_existing
+
+- name: Helm - run install script
+  ansible.builtin.shell: 
+    ~/helm_install.sh >> ~/helm_install_log.txt
+  args:
+    chdir: "~"
+    creates: /usr/local/bin/helm

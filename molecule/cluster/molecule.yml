@@ -1,0 +1,49 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: instance-1
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    published_ports:
+      - "127.0.0.1:8080:8080/tcp"
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host    
+    privileged: true
+    pre_build_image: true
+    groups:
+      - control_plane
+      - cluster
+    dns_servers:
+      - 100.100.100.100 # for tailnet lookups
+      - 1.1.1.1 # for external lookups
+  - name: instance-2
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host    
+    privileged: true
+    pre_build_image: true
+    groups:
+      - nodes
+      - cluster
+    dns_servers:
+      - 100.100.100.100 # for tailnet lookups
+      - 1.1.1.1 # for external lookups
+provisioner:
+  name: ansible
+  env:
+    GLOBAL_BECOME: false # Must set to false of molecule freaks out
+    SNAPSHOTTER: fuse-overlayfs # Using podman inside docker to get k3s to run only in Molecule
+    BLOCK_REMOTE_SET_URL_SSH: true
+  inventory:
+    host_vars:
+      instance-1:
+        node_name: node1
+        node_label: storage
+      instance-2:
+        node_name: node2

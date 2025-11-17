@@ -1,0 +1,36 @@
+---
+- name: Storage - Ensure nfs kernel server is installed
+  ansible.builtin.package:
+    name: 
+      - nfs-kernel-server
+    state: present
+
+- name: Storage - mount usb ext4 drive by UUID
+  ansible.posix.mount:
+    path: "{{ usb_mount_path }}"
+    src: "UUID={{ usb_device_uuid }}"
+    fstype: ext4
+    state: mounted
+
+- name: Storage - Recursively change ownership of usb share root dir
+  ansible.builtin.file:
+    path: "{{ usb_mount_path }}"
+    owner: root
+    group: "{{ ansible_user }}"
+    mode: 0777
+    state: directory
+    recurse: true
+
+- name: Configure NFS exports.
+  ansible.builtin.lineinfile:
+    dest: /etc/exports
+    line: "{{ usb_mount_path }} *(rw,fsid=0,sync,no_root_squash)"
+    regexp: ".*"
+    create: true
+  notify: restart nfs
+
+- name: Ensure NFS is started and enabled at boot.
+  ansible.builtin.service:
+    name: nfs-server
+    state: started
+    enabled: true

@@ -1,0 +1,61 @@
+---
+- name: Tailscale - Maybe fail if missing Tailscale env variables on local
+  local_action:
+    module: ansible.builtin.fail
+    msg: Env vars TS_K8S_CLIENT_ID, TS_K8S_CLIENT_SECRET, and TS_DNS_NAME must be set to get proceed with tailscale_join_network set to true
+  vars:
+    has_ts_client_id: lookup('ansible.builtin.env', 'TS_K8S_CLIENT_ID') | length > 0
+    has_ts_client_secret: lookup('ansible.builtin.env', 'TS_K8S_CLIENT_SECRET') | length > 0
+    has_ts_dns_name: lookup('ansible.builtin.env', 'TS_DNS_NAME') | length > 0
+  when: 
+    - tailscale_join_network
+    - (not has_ts_client_id or not has_ts_client_secret or not has_ts_dns_name)
+
+- name: Tailscale-k8s-operator - Create tailscale namespace
+  kubernetes.core.k8s:
+    name: tailscale
+    api_version: v1
+    kind: Namespace
+    state: present
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+  vars:
+    ansible_python_interpreter: "{{ venv_dir }}/bin/python"
+
+- name: Tailscale-k8s-operator - Maybe create operator-oauth secret  
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: operator-oauth
+        namespace: tailscale
+      type: Opaque
+      stringData:
+        client_id: "{{ lookup('ansible.builtin.env', 'TS_K8S_CLIENT_ID') }}"
+        client_secret: "{{ lookup('ansible.builtin.env', 'TS_K8S_CLIENT_SECRET') }}"
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+  vars:
+    ansible_python_interpreter: "{{ venv_dir }}/bin/python"
+  when: 
+    - tailscale_join_network
+
+- name: Tailscale-k8s-operator - Maybe create traefik host name secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        namespace: kube-system
+        name: traefik-tailscale-config
+      stringData:
+        configValues: |-
+          ingressRoute:
+            dashboard:
+              matchRule: Host(`traefik.{{ lookup('ansible.builtin.env', 'TS_DNS_NAME') }}`)
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+  vars:
+    ansible_python_interpreter: "{{ venv_dir }}/bin/python"
+  when: 
+    - tailscale_join_network

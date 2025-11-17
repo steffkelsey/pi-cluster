@@ -1,0 +1,17 @@
+---
+- name: k3s-admin - Ensure group "k3s-admin" exists
+  ansible.builtin.group:
+    name: k3s-admin
+    state: present
+
+- name: k3s-admin - Add user to k3s-admin group
+  ansible.builtin.user:
+    name: "{{ lookup('env', 'USER') }}"
+    groups: k3s-admin
+    append: yes
+
+- name: k3s-admin - Change group ownership and permission of k3s.yaml
+  ansible.builtin.file:
+    path: /etc/rancher/k3s/k3s.yaml
+    group: k3s-admin
+    mode: g+r

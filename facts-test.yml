@@ -1,0 +1,14 @@
+---
+- name: Temp playbook to figure out a thing
+  hosts: control_plane
+  become: false
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+    - name: Create the extra_args
+      ansible.builtin.debug:
+        msg: "{{ extra_args }}"
+      vars:
+        extra_args: "{{ (node_label == 'storage') | ternary('--node-label ' + k8s_storage_node_label, '') }}"

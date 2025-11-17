@@ -1,0 +1,9 @@
+---
+- name: "include tasks for testing k3s"
+  include_tasks: "test_k3s.yml"
+
+- name: "include tasks for testing Helm"
+  include_tasks: "test_helm.yml"
+
+- name: "include tasks for testing ArgoCD"
+  include_tasks: "test_argocd.yml"

@@ -1,0 +1,9 @@
+---
+- name: k3s - Populate service facts
+  ansible.builtin.service_facts:
+
+- name: k3s - assert k3s service is running
+  assert:
+    that:
+      - ansible_facts.services['k3s.service']['status'] == 'enabled'
+      - ansible_facts.services['k3s.service']['state'] == 'running'

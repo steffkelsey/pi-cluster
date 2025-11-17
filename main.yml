@@ -1,0 +1,129 @@
+---
+- name: Setup clusterwide configuration
+  hosts: cluster
+  # There is an issue with molecule in github actions where we need to be able to
+  # turn off become or everything fails in CI.
+  become: "{{ lookup('ansible.builtin.env', 'GLOBAL_BECOME', default='true') }}"
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+#    - name: Print all available facts
+#      debug:
+#        var: ansible_facts
+
+    - name: Download K3s install script.
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: "~/k3s_install.sh"
+        mode: a+x
+
+    - name: Include install packages tasks
+      include_tasks: tasks/packages.yml
+
+- name: Setup control plane
+  hosts: control_plane
+  become: "{{ lookup('ansible.builtin.env', 'GLOBAL_BECOME', default='true') }}"
+
+  vars_files:
+    - default.config.yml
+
+  # Need to be able to switch the snapshotter for running in Molecule. Sane default
+  # below works in Raspberry Pis running ubuntu server 
+  vars:
+    snapshotter: "{{ lookup('ansible.builtin.env', 'SNAPSHOTTER', default='overlayfs') }}"
+
+  # TODO
+    # if fact node_label is storage, var extra_args: "--node-label {{ k8s_storage_node_label }}"
+
+  tasks:
+    - name: Install K3s on control plane
+      ansible.builtin.shell: >-
+        K3S_DEBUG=true INSTALL_K3S_EXEC="server --snapshotter {{ snapshotter }} --node-name {{ node_name }} {{ extra_args }}" ~/k3s_install.sh >> ~/k3s_install_log.txt
+      args:
+        chdir: "~"
+        # ONLY runs if the node-token does NOT exist
+        creates: /var/lib/rancher/k3s/server/node-token
+      vars:
+        extra_args: "{{ (node_label == 'storage') | ternary('--node-label ' + k8s_storage_node_label, '') }}"
+
+    - name: Get node token.
+      ansible.builtin.command: cat /var/lib/rancher/k3s/server/node-token
+      changed_when: false
+      register: node_token_output
+
+    - name: Set node_token fact.
+      ansible.builtin.set_fact:
+        node_token: "{{ node_token_output.stdout_lines[0] }}"
+
+    - name: Include kubernetes client tasks
+      include_tasks: tasks/kubernetes-client.yml
+
+    - name: Include Helm installation tasks
+      include_tasks: tasks/helm.yml
+
+    - name: Include k3s-admin tasks
+      include_tasks: tasks/k3s-admin.yml
+
+    - name: Include Tailscale installation tasks
+      include_tasks: tasks/tailscale.yml  
+
+- name: Configure the worker nodes.
+  hosts: nodes
+  become: "{{ lookup('ansible.builtin.env', 'GLOBAL_BECOME', default='true') }}"
+
+  vars_files:
+    - default.config.yml
+
+  # Need to be able to switch the snapshotter for running in Molecule. Sane default
+  # below works in Raspberry Pis running ubuntu server 
+  vars:
+    snapshotter: "{{ lookup('ansible.builtin.env', 'SNAPSHOTTER', default='overlayfs') }}"
+
+  tasks:
+#    - name: Pause until user confirms
+#      ansible.builtin.pause:
+#        prompt: "Press Enter to add k3s agent node..."
+
+    - name: Install K3s on nodes
+      ansible.builtin.shell: >-
+        K3S_DEBUG=true INSTALL_K3S_EXEC="--snapshotter {{ snapshotter }} --node-name {{ node_name }} {{ extra_args }}" K3S_URL="https://{{ hostvars[groups['control_plane'][0]]['ansible_facts']['eth0']['ipv4']['address'] }}:6443"
+        K3S_TOKEN="{{ hostvars[groups['control_plane'][0]]['node_token'] }}"
+        ~/k3s_install.sh >> ~/k3s_install_log.txt
+      args:
+        chdir: "~"
+        creates: /var/lib/rancher/k3s/agent/kubelet.kubeconfig     
+      vars:
+        extra_args: "{{ (node_label == 'storage') | ternary('--node-label ' + k8s_storage_node_label, '') }}"
+
+- name: Configure the usb storage nodes        
+  hosts: usb_storage
+  become: "{{ lookup('ansible.builtin.env', 'GLOBAL_BECOME', default='true') }}"
+
+  handlers:
+    - name: restart nfs
+      ansible.builtin.service:
+        name: nfs-server
+        state: restarted
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+    - name: Include storage tasks
+      include_tasks: tasks/storage.yml
+
+- name: Install ArgoCD and bootstrap applications on the control plane
+  hosts: control_plane
+  become: false
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+    - name: Include Tailscale k8s Operator tasks
+      include_tasks: tasks/tailscale-k8s-operator.yml
+
+    - name: Include ArgoCD tasks
+      include_tasks: tasks/argocd.yml
