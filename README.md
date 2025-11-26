@@ -23,7 +23,9 @@ additional packages
  - [x] kubernetes client for python (needed just for installing other stuff) 
  - [x] nfs-kernel-server for serving files in a USB Mount (temporary until new more energy efficient network attached storage is setup)  
  - [ ] for multinode clusters, disable ServiceLB at k3s server installed
- (`--disable=servicelb`) and install Metalb via ArgoCD in the homelab-live repo
+ (`--disable=servicelb`) and install Cilium LoadBalancer via ArgoCD in the homelab-live repo
+ - [ ] disable flannel (`--flannel-backend=none --disable-network-policy`) at k3s server install in favor of more secure CNI (Cilium)
+ - [ ] install Cilium CLI on the server node
 
 ## Setup Raspberry Pi
 

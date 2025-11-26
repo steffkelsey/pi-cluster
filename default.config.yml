@@ -8,6 +8,7 @@ packages:
   - git
   - jq
   - python3-venv
+  - nfs-common # for all nodes to connect as NFS clients
   - tree
   - vim
 
@@ -18,3 +19,4 @@ venv_dir: /ansible/venv
 usb_device_uuid: e192928f-a460-47f5-b6a4-018c85c9c403
 usb_mount_path: /mnt/usb
 k8s_storage_node_label: hdd=enabled
+k8s_jellyfin_node_label: jellyfin=enabled
