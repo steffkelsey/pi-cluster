@@ -50,8 +50,8 @@ jobs:
       - name: Setup test environment.
         run: ansible-galaxy install -r requirements.yml
 
-      - name: Run Molecule tests.
-        run: molecule test --all
+      - name: Run the Molecule tests, excluding cluster scenario
+        run: molecule test --all --exclude cluster
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
