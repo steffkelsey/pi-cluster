@@ -3,4 +3,4 @@
   ansible.builtin.pip:
     name: kubernetes
     virtualenv: "{{ venv_dir }}"
-    virtualenv_command: "{{ ansible_python['executable'] }} -m venv"
+    virtualenv_command: "{{ ansible_facts['python']['executable'] }} -m venv"

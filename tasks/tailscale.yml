@@ -24,8 +24,8 @@
     state: started
 
 - name: Tailscale - Maybe fail if missing Tailscale env variables on local
-  local_action:
-    module: ansible.builtin.fail
+  delegate_to: localhost
+  ansible.builtin.fail:
     msg: Env vars TS_CLIENT_ID and TS_CLIENT_SECRET must be set to get proceed with tailscale_join_network set to true
   become: false
   vars:
@@ -36,8 +36,8 @@
     - (not has_ts_client_id or not has_ts_client_secret)
 
 - name: Tailscale - Maybe create API key
-  local_action:
-    module: ansible.builtin.uri
+  delegate_to: localhost
+  ansible.builtin.uri:
     url: 'https://api.tailscale.com/api/v2/oauth/token'
     method: POST
     body:
@@ -52,8 +52,8 @@
   failed_when: oauth_token_result.json.access_token is not defined
 
 - name: Tailscale - Maybe get join auth_key
-  local_action:
-    module: ansible.builtin.uri
+  delegate_to: localhost
+  ansible.builtin.uri:
     url: "https://api.tailscale.com/api/v2/tailnet/{{ tailscale_tailnet }}/keys"
     method: POST
     body: |
