@@ -8,6 +8,13 @@
   vars_files:
     - default.config.yml
 
+  handlers:
+    - name: restart avahi
+      ansible.builtin.systemd_service:
+        name: avahi-daemon
+        daemon_reload: true
+        state: restarted
+
   tasks:
 #    - name: Print all available facts
 #      debug:
@@ -21,6 +28,9 @@
 
     - name: Include install packages tasks
       include_tasks: tasks/packages.yml
+
+    - name: Include mDNS tasks
+      include_tasks: tasks/mdns.yml
 
 - name: Setup control plane
   hosts: control_plane

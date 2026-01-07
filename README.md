@@ -5,8 +5,8 @@
 An Ansible playbook to install the software needed to run kubernetes on a cluster
 of Raspberry Pis.
 
-Currently, my cluster is one Raspberry Pi 400 but the plan is to get more
-sophisticated and add more Pis.
+Currently, my cluster is one Raspberry Pi 400 and one pi 4B but the plan is to get more
+sophisticated and add more SBCs including Rockchip.
 
 This repo gives instructions on how to setup the hardware and stops after the 
 basic software is installed. The actual software that will run on k8s in the
@@ -49,12 +49,13 @@ the ~/.ssh/config file for each Host.
 ```
 Host node1.local
   Hostname 192.168.xx.xx
-  Port | Column1 | Column2 
-  | -------------- | --------------- |
-  | Item1.1 | Item2.1 |
-  
-
+  Port 22
+  User steff
 ```
+
+Once avahi is up and runing (and publish-workstation=yes), then the ssh config
+will no longer matter and you can ssh by `ssh steff@node1.local` as long as 
+you are on a network that can see node1.local with `avahi-browse`.
 
 ## Setup Ansible
 
@@ -100,9 +101,6 @@ To upgrade all the software installed with apt, run
 ```bash
 ansible-playbook upgrade.yml --ask-become-pass
 ```
-
-If Neovim is a fresh install, you will need to run :MasonInstallAll to install
-the default lsp servers.
 
 ## Tests
 

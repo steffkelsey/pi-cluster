@@ -1,0 +1,21 @@
+---
+- name: mDNS - Install Avahi packages
+  ansible.builtin.apt:
+    name:
+      - avahi-daemon
+      - avahi-utils
+      - libnss-mdns
+    state: present
+
+- name: mDNS - Ensure publish-worksation is set to yes
+  ansible.builtin.lineinfile:
+    dest: /etc/avahi/avahi-daemon.conf
+    line: publish-workstation=yes
+    search_string: 'publish-workstation'
+  notify: restart avahi
+
+- name: mDNS - Ensure Avahi daemon is running and enabled
+  ansible.builtin.systemd_service:
+    name: avahi-daemon
+    state: started
+    enabled: true
