@@ -79,6 +79,9 @@
     - name: Include Tailscale installation tasks
       include_tasks: tasks/tailscale.yml  
 
+    - name: Include task to create k8s secret for name.com credentials
+      include_tasks: tasks/namedotcom-secret.yml
+
 - name: Configure the worker nodes.
   hosts: nodes
   become: "{{ lookup('ansible.builtin.env', 'GLOBAL_BECOME', default='true') }}"

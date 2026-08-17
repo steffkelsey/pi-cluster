@@ -29,8 +29,8 @@
     msg: Env vars TS_CLIENT_ID and TS_CLIENT_SECRET must be set to get proceed with tailscale_join_network set to true
   become: false
   vars:
-    has_ts_client_id: lookup('ansible.builtin.env', 'TS_CLIENT_ID') | length > 0
-    has_ts_client_secret: lookup('ansible.builtin.env', 'TS_CLIENT_SECRET') | length > 0
+    has_ts_client_id: "{{ lookup('ansible.builtin.env', 'TS_CLIENT_ID') | length > 0 }}"
+    has_ts_client_secret: "{{ lookup('ansible.builtin.env', 'TS_CLIENT_SECRET') | length > 0 }}"
   when: 
     - tailscale_join_network
     - (not has_ts_client_id or not has_ts_client_secret)

@@ -4,9 +4,9 @@
   ansible.builtin.fail:
     msg: Env vars TS_K8S_CLIENT_ID, TS_K8S_CLIENT_SECRET, and TS_DNS_NAME must be set to get proceed with tailscale_join_network set to true
   vars:
-    has_ts_client_id: lookup('ansible.builtin.env', 'TS_K8S_CLIENT_ID') | length > 0
-    has_ts_client_secret: lookup('ansible.builtin.env', 'TS_K8S_CLIENT_SECRET') | length > 0
-    has_ts_dns_name: lookup('ansible.builtin.env', 'TS_DNS_NAME') | length > 0
+    has_ts_client_id: "{{ lookup('ansible.builtin.env', 'TS_K8S_CLIENT_ID') | length > 0 }}"
+    has_ts_client_secret: "{{ lookup('ansible.builtin.env', 'TS_K8S_CLIENT_SECRET') | length > 0 }}"
+    has_ts_dns_name: "{{ lookup('ansible.builtin.env', 'TS_DNS_NAME') | length > 0 }}"
   when: 
     - tailscale_join_network
     - (not has_ts_client_id or not has_ts_client_secret or not has_ts_dns_name)
