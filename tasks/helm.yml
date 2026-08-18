@@ -1,7 +1,7 @@
 ---
 - name: Helm - Download install script.
   ansible.builtin.get_url:
-    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
     dest: "~/helm_install.sh"
     mode: a+x
 
