@@ -23,9 +23,11 @@ platforms:
 provisioner:
   name: ansible
   env:
-    GLOBAL_BECOME: false # Must set to false of molecule freaks out
+    GLOBAL_BECOME: false # Must set to false or molecule freaks out in CI
     SNAPSHOTTER: fuse-overlayfs # Using podman inside docker to get k3s to run only in Molecule
     BLOCK_REMOTE_SET_URL_SSH: true
+    NAMEDOTCOM_USERNAME: username_for_name.com
+    NAMEDOTCOM_TOKEN: fake_api_token_for_name.com
   inventory:
     host_vars:
       instance:
