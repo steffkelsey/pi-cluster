@@ -25,4 +25,35 @@
           - fuse-overlayfs
         state: present
 
+    - name: Check if cgroup2 is already mounted for Cilium
+      ansible.builtin.command: mountpoint -q /run/cilium/cgroupv2
+      register: cilium_cgroup_mounted
+      failed_when: false
+      changed_when: false
+
+    - name: Create Cilium cgroupv2 directory
+      ansible.builtin.file:
+        path: /run/cilium/cgroupv2
+        state: directory
+        mode: '0755'
+      when: cilium_cgroup_mounted.rc != 0
+
+    - name: Mount cgroup2 for Cilium
+      ansible.builtin.mount:
+        path: /run/cilium/cgroupv2
+        src: none
+        fstype: cgroup2
+        state: mounted
+        opts: rw,nosuid,nodev,noexec
+
+    - name: Ensure cgroupv2 mount is shared
+      ansible.builtin.command: mount --make-shared /run/cilium/cgroupv2
+      register: cgroup_shared
+      changed_when: false
+
+    - name: Ensure sys fs bpf mount is shared
+      ansible.builtin.command: mount --make-shared /sys/fs/bpf
+      register: bpf_shared
+      changed_when: false
+
 - import_playbook: ../../main.yml

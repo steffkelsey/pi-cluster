@@ -1,0 +1,20 @@
+---
+- name: Cilium - Upgrades or installs the chart into the namespace
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: oci://quay.io/cilium/charts/cilium
+    chart_version: "{{ cilium_chart_version }}"
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    release_namespace: kube-system
+    state: present # equiv to helm upgrade --install
+    values:
+      operator:
+        replicas: 1 # for HA, should be greater than or equal to 2.
+      ipam:
+        mode: kubernetes
+      kubeProxyReplacement: true
+      k8sServiceHost: "{{ ansible_facts['default_ipv4']['address'] }}"
+      k8sServicePort: 6443
+      encryption:
+        enabled: true
+        type: wireguard

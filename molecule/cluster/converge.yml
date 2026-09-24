@@ -14,7 +14,7 @@
         'degraded' in systemctl_status.stdout
       retries: 30
       delay: 5
-      when: ansible_facts["service_mgr'] == 'systemd'
+      when: ansible_facts["service_mgr"] == 'systemd'
       changed_when: false
       failed_when: systemctl_status.rc > 1
 
@@ -24,5 +24,14 @@
           - curl
           - fuse-overlayfs
         state: present
+
+    - name: Make sure shared mounts propogate for Cilium
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - mkdir -p /run/cilium/cgroupv2
+        - mount -t cgroup2 none /run/cilium/cgroupv2
+        - mount --make-shared /run/cilium/cgroupv2
+        - mount --make-shared /sys/fs/bpf
+      changed_when: true
 
 - import_playbook: ../../main.yml

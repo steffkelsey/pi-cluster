@@ -20,3 +20,6 @@ usb_device_uuid: e192928f-a460-47f5-b6a4-018c85c9c403
 usb_mount_path: /mnt/usb
 k8s_storage_node_label: hdd=enabled
 k8s_jellyfin_node_label: jellyfin=enabled
+
+argocd_chart_version: 10.9.2
+cilium_chart_version: 1.20.2

@@ -50,7 +50,7 @@
   tasks:
     - name: Install K3s on control plane
       ansible.builtin.shell: >-
-        K3S_DEBUG=true INSTALL_K3S_EXEC="server --snapshotter {{ snapshotter }} --node-name {{ node_name }} {{ extra_args }}" ~/k3s_install.sh >> ~/k3s_install_log.txt
+        K3S_DEBUG=true INSTALL_K3S_EXEC="server --snapshotter {{ snapshotter }} --node-name {{ node_name }} --flannel-backend=none --disable-network-policy --disable-kube-proxy --disable=servicelb {{ extra_args }}" ~/k3s_install.sh >> ~/k3s_install_log.txt
       args:
         chdir: "~"
         # ONLY runs if the node-token does NOT exist
@@ -126,6 +126,17 @@
   tasks:
     - name: Include storage tasks
       include_tasks: tasks/storage.yml
+
+- name: Install Cilium on the control plane
+  hosts: control_plane
+  become: false
+
+  vars_files:
+    - default.config.yml
+
+  tasks:
+    - name: Include Cilium tasks
+      include_tasks: tasks/cilium.yml
 
 - name: Install ArgoCD and bootstrap applications on the control plane
   hosts: control_plane
