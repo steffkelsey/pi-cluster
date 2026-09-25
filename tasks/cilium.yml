@@ -18,3 +18,5 @@
       encryption:
         enabled: true
         type: wireguard
+      l2announcements:
+        enabled: true
