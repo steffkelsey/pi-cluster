@@ -91,6 +91,11 @@ ansible all -m ping
 
 ## Running
 
+To provision the storage to the node in hosts.ini in `usb_storage`:  
+```bash
+ansible-playbook storage.yml --ask-become-pass
+```
+
 To provision all the roles in this repo for the entire pi-cluster in hosts.ini, navigate
 to the root directory of this repo and run:  
 ```bash

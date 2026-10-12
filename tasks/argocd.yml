@@ -21,6 +21,14 @@
     chart_ref: oci://ghcr.io/argoproj/argo-helm/argo-cd
     chart_version: "{{ argocd_chart_version }}"
     release_namespace: argocd
+    values:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: jellyfin # Don't deploy on nodes labeled for jellyfin
+                operator: DoesNotExist
     kubeconfig: /etc/rancher/k3s/k3s.yaml
     state: present # equiv to helm upgrade --install
 
