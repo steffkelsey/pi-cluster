@@ -10,6 +10,7 @@
     path: "{{ usb_mount_path }}"
     src: "UUID={{ usb_device_uuid }}"
     fstype: ext4
+    opts: defaults,nofail
     state: mounted
 
 - name: Storage - Recursively change ownership of usb share root dir
